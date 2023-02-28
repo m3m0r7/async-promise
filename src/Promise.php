@@ -34,11 +34,26 @@ class Promise
     {
         $this->fulfilled = new Resolver($this);
         $this->rejected = new Resolver($this);
+
         $this->start(
             $function,
             ($this->fulfilled)(fn() => $this->status = static::FULFILLED),
             ($this->rejected)(fn() => $this->status = static::REJECTED),
         );
+    }
+
+    public static function resolve(mixed $value): self
+    {
+        return new static(function ($resolve) use ($value) {
+            $resolve($value);
+        });
+    }
+
+    public static function reject(mixed $value): self
+    {
+        return new static(function ($_, $reject) use ($value) {
+            $reject($value);
+        });
     }
 
     protected function start(callable $function, ...$parameters): void
@@ -75,17 +90,22 @@ class Promise
             $results = [];
             do {
                 /**
-                 * @var Promise[] $promises
+                 * @var mixed[] $promises
                  */
                 foreach ($promises as $index => $promise) {
-                    if ($promise->status === static::FULFILLED) {
+                    if ($promise instanceof Promise) {
+                        if ($promise->status === static::FULFILLED) {
+                            $remaining--;
+                            $results[$index] = $promise->fulfilled->result;
+                        }
+                        if ($promise->status === static::REJECTED) {
+                            // stop to loop
+                            $reject($promise->rejected->result);
+                            return;
+                        }
+                    } else {
                         $remaining--;
-                        $results[$index] = $promise->fulfilled->result;
-                    }
-                    if ($promise->status === static::REJECTED) {
-                        // stop to loop
-                        $reject($promise->rejected->result);
-                        return;
+                        $results[$index] = $promise;
                     }
                 }
             } while ($remaining > 0);
@@ -103,20 +123,28 @@ class Promise
             $results = [];
             do {
                 /**
-                 * @var Promise[] $promises
+                 * @var mixed[] $promises
                  */
                 foreach ($promises as $index => $promise) {
-                    if ($promise->status === static::FULFILLED) {
+                    if ($promise instanceof Promise) {
+                        if ($promise->status === static::FULFILLED) {
+                            $remaining--;
+                            $results[$index] = new PromiseResultFulfilled(
+                                $promise->status,
+                                $promise->fulfilled->result
+                            );
+                        } elseif ($promise->status === static::REJECTED) {
+                            $remaining--;
+                            $results[$index] = new PromiseResultRejected(
+                                $promise->status,
+                                $promise->rejected->result
+                            );
+                        }
+                    } else {
                         $remaining--;
                         $results[$index] = new PromiseResultFulfilled(
-                            $promise->status,
-                            $promise->fulfilled->result
-                        );
-                    } elseif ($promise->status === static::REJECTED) {
-                        $remaining--;
-                        $results[$index] = new PromiseResultRejected(
-                            $promise->status,
-                            $promise->rejected->result
+                            static::FULFILLED,
+                            (string) $promise
                         );
                     }
                 }
@@ -133,16 +161,21 @@ class Promise
         return new static(function (callable $resolve, callable $reject) use ($promises) {
             do {
                 /**
-                 * @var Promise[] $promises
+                 * @var mixed[] $promises
                  */
                 foreach ($promises as $index => $promise) {
-                    if ($promise->status === static::FULFILLED) {
-                        $resolve($promise->fulfilled->result);
-                        return;
-                    }
-                    if ($promise->status === static::REJECTED) {
-                        // stop to loop
-                        $reject($promise->rejected->result);
+                    if ($promise instanceof Promise) {
+                        if ($promise->status === static::FULFILLED) {
+                            $resolve($promise->fulfilled->result);
+                            return;
+                        }
+                        if ($promise->status === static::REJECTED) {
+                            // stop to loop
+                            $reject($promise->rejected->result);
+                            return;
+                        }
+                    } else {
+                        $resolve($promise);
                         return;
                     }
                 }
@@ -160,15 +193,20 @@ class Promise
                  * @var Promise[] $promises
                  */
                 foreach ($promises as $index => $promise) {
-                    if ($promise->status === static::FULFILLED) {
-                        // stop to loop
-                        $resolve($promise->fulfilled->result);
-                        return;
-                    }
+                    if ($promise instanceof Promise) {
+                        if ($promise->status === static::FULFILLED) {
+                            // stop to loop
+                            $resolve($promise->fulfilled->result);
+                            return;
+                        }
 
-                    if ($promise->status === static::REJECTED) {
-                        $remaining--;
-                        $results[$index] = $promise->rejected->result;
+                        if ($promise->status === static::REJECTED) {
+                            $remaining--;
+                            $results[$index] = $promise->rejected->result;
+                        }
+                    } else {
+                        $resolve($promise);
+                        return;
                     }
                 }
             } while ($remaining > 0);
