@@ -10,7 +10,7 @@ use AsyncPromise\Driver\SwooleDriver;
 use AsyncPromise\Exception\HandlePropagator;
 use AsyncPromise\Result\PromiseResultFulfilled;
 use AsyncPromise\Result\PromiseResultRejected;
-use AsyncPromise\Rsolver\Resolver;
+use AsyncPromise\Resolver\Resolver;
 
 class Promise
 {
@@ -244,7 +244,7 @@ class Promise
         $this->rejected = clone $this->rejected;
     }
 
-    protected function createNoop(): self
+    private function createNoop(): self
     {
         return clone $this;
     }
@@ -289,5 +289,10 @@ class Promise
 
         $newPromise->nextPromise ??= $this->createNoop();
         return $newPromise;
+    }
+
+    public function status(): string
+    {
+        return $this->status;
     }
 }

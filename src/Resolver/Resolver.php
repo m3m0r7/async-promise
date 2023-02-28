@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace AsyncPromise\Rsolver;
+namespace AsyncPromise\Resolver;
 
 use AsyncPromise\Promise;
 
