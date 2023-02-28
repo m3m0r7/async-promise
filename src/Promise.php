@@ -8,10 +8,12 @@ use AsyncPromise\Driver\DriverInterface;
 use AsyncPromise\Driver\PolyfillDriver;
 use AsyncPromise\Driver\SwooleDriver;
 use AsyncPromise\Exception\HandlePropagator;
+use AsyncPromise\Exception\PromiseException;
 use AsyncPromise\Result\PromiseResultFulfilled;
 use AsyncPromise\Result\PromiseResultRejected;
 use AsyncPromise\Resolver\Resolver;
 
+/** @phpstan-consistent-constructor */
 class Promise
 {
     public const FULFILLED = 'fulfilled';
@@ -77,7 +79,7 @@ class Promise
         });
     }
 
-    protected function start(callable $function, ...$parameters): void
+    protected function start(callable $function, mixed ...$parameters): void
     {
         $this->driver = new (static::$driverName)();
         $this->function = $function;
@@ -103,25 +105,29 @@ class Promise
         });
     }
 
-
+    /**
+     * @param array<mixed> $promises
+     */
     public static function all(array $promises): self
     {
         return new static(function (callable $resolve, callable $reject) use ($promises) {
             $remaining = count($promises);
             $results = [];
             do {
-                /**
-                 * @var mixed[] $promises
-                 */
                 foreach ($promises as $index => $promise) {
                     if ($promise instanceof Promise) {
                         if ($promise->status === static::FULFILLED) {
                             $remaining--;
-                            $results[$index] = current($promise->fulfilled->result);
+                            $results[$index] = is_array($promise->fulfilled->result)
+                                ? current($promise->fulfilled->result)
+                                : $promise->fulfilled->result;
                         }
                         if ($promise->status === static::REJECTED) {
-                            // stop to loop
-                            $reject(...$promise->rejected->result);
+                            if (is_array($promise->rejected->result)) {
+                                $reject(...$promise->rejected->result);
+                            } else {
+                                $reject($promise->rejected->result);
+                            }
                             return;
                         }
                     } else {
@@ -134,32 +140,32 @@ class Promise
         });
     }
 
+    /**
+     * @param array<mixed> $promises
+     */
     public static function allSettled(array $promises): self
     {
         return new static(function (callable $resolve, callable $reject) use ($promises) {
             $remaining = count($promises);
             $results = [];
             do {
-                /**
-                 * @var mixed[] $promises
-                 */
                 foreach ($promises as $index => $promise) {
                     if ($promise instanceof Promise) {
                         if ($promise->status === static::FULFILLED) {
                             $remaining--;
                             $results[$index] = new PromiseResultFulfilled(
                                 $promise->status,
-                                $promise->fulfilled->result
+                                is_array($promise->fulfilled->result)
                                     ? current($promise->fulfilled->result)
-                                    : null
+                                    : $promise->fulfilled->result
                             );
                         } elseif ($promise->status === static::REJECTED) {
                             $remaining--;
                             $results[$index] = new PromiseResultRejected(
                                 $promise->status,
-                                $promise->rejected->result
+                                is_array($promise->rejected->result)
                                     ? current($promise->rejected->result)
-                                    : null,
+                                    : $promise->rejected->result,
                             );
                         }
                     } else {
@@ -176,22 +182,29 @@ class Promise
         });
     }
 
+    /**
+     * @param array<mixed> $promises
+     */
     public static function race(array $promises): self
     {
         return new static(function (callable $resolve, callable $reject) use ($promises) {
             do {
-                /**
-                 * @var mixed[] $promises
-                 */
                 foreach ($promises as $index => $promise) {
                     if ($promise instanceof Promise) {
                         if ($promise->status === static::FULFILLED) {
-                            $resolve(...$promise->fulfilled->result);
+                            if (is_array($promise->fulfilled->result)) {
+                                $resolve(...$promise->fulfilled->result);
+                            } else {
+                                $resolve($promise->fulfilled->result);
+                            }
                             return;
                         }
                         if ($promise->status === static::REJECTED) {
-                            // stop to loop
-                            $reject(...$promise->rejected->result);
+                            if (is_array($promise->rejected->result)) {
+                                $reject(...$promise->rejected->result);
+                            } else {
+                                $reject($promise->rejected->result);
+                            }
                             return;
                         }
                     } else {
@@ -203,26 +216,32 @@ class Promise
         });
     }
 
+    /**
+     * @param array<mixed> $promises
+     */
     public static function any(array $promises): self
     {
         return new static(function (callable $resolve, callable $reject) use ($promises) {
             $remaining = count($promises);
             $results = [];
             do {
-                /**
-                 * @var Promise[] $promises
-                 */
                 foreach ($promises as $index => $promise) {
                     if ($promise instanceof Promise) {
                         if ($promise->status === static::FULFILLED) {
                             // stop to loop
-                            $resolve(...$promise->fulfilled->result);
+                            if (is_array($promise->fulfilled->result)) {
+                                $resolve(...$promise->fulfilled->result);
+                            } else {
+                                $resolve($promise->fulfilled->result);
+                            }
                             return;
                         }
 
                         if ($promise->status === static::REJECTED) {
                             $remaining--;
-                            $results[$index] = current($promise->rejected->result);
+                            $results[$index] = is_array($promise->rejected->result)
+                                ? current($promise->rejected->result)
+                                : $promise->rejected->result;
                         }
                     } else {
                         $resolve($promise);
@@ -279,6 +298,10 @@ class Promise
     protected function process(callable $callback, callable $extractArguments): self
     {
         $this->driver->wait();
+
+        if (!($this->nextPromise instanceof Promise)) {
+            throw new PromiseException('The promise is not started');
+        }
 
         $newPromise = clone $this->nextPromise;
         $result = $extractArguments($newPromise);
