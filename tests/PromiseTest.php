@@ -295,7 +295,94 @@ class PromiseTest extends TestCase
             $instantiatedStdClass,
             'fulfilled',
             1.1,
-            'string'
+            'string',
+        ], $results);
+    }
+
+    /**
+     * @dataProvider provideDrivers
+     */
+    public function testPromiseAllSettled(string $driverName)
+    {
+        Promise::setPromiseDriver($driverName);
+
+        $results = [];
+        $instantiatedStdClass = null;
+        \Co\run(function () use (&$results, &$instantiatedStdClass) {
+            Promise::allSettled([
+                43,
+                ['array'],
+                $instantiatedStdClass = new \stdClass(),
+                new Promise(fn (callable $resolve) => $resolve('fulfilled')),
+                1.1,
+                'string',
+                new Promise(fn (callable $_, callable $reject) => $reject('rejected')),
+            ])->then(function ($values) use (&$results) {
+                foreach ($values as $result) {
+                    $results[] = $result->value ?? $result->reason;
+                }
+            });
+        });
+
+        $this->assertSame([
+            43,
+            ['array'],
+            $instantiatedStdClass,
+            'fulfilled',
+            1.1,
+            'string',
+            'rejected'
+        ], $results);
+    }
+
+    /**
+     * @dataProvider provideDrivers
+     */
+    public function testPromiseRace(string $driverName)
+    {
+        Promise::setPromiseDriver($driverName);
+
+        $results = [];
+        $instantiatedStdClass = null;
+        \Co\run(function () use (&$results, &$instantiatedStdClass) {
+            Promise::race([
+                43,
+                ['array'],
+                $instantiatedStdClass = new \stdClass(),
+                new Promise(fn (callable $resolve) => $resolve('fulfilled')),
+                1.1,
+                'string',
+                new Promise(fn (callable $_, callable $reject) => $reject('rejected')),
+            ])->then(function ($result) use (&$results) {
+                $results = $result;
+            });
+        });
+
+        $this->assertSame(43, $results);
+    }
+
+    /**
+     * @dataProvider provideDrivers
+     */
+    public function testPromiseAny(string $driverName)
+    {
+        Promise::setPromiseDriver($driverName);
+
+        $results = [];
+        \Co\run(function () use (&$results, &$instantiatedStdClass) {
+            Promise::any([
+                new Promise(fn (callable $_, callable $reject) => $reject('rejected1')),
+                new Promise(fn (callable $_, callable $reject) => $reject('rejected2')),
+                new Promise(fn (callable $_, callable $reject) => $reject('rejected3')),
+            ])->catch(function ($values) use (&$results) {
+                $results = $values;
+            });
+        });
+
+        $this->assertSame([
+            'rejected1',
+            'rejected2',
+            'rejected3',
         ], $results);
     }
 

@@ -166,7 +166,7 @@ class Promise
                         $remaining--;
                         $results[$index] = new PromiseResultFulfilled(
                             static::FULFILLED,
-                            (string) $promise
+                            $promise
                         );
                     }
                 }
@@ -222,7 +222,7 @@ class Promise
 
                         if ($promise->status === static::REJECTED) {
                             $remaining--;
-                            $results[$index] = $promise->rejected->result;
+                            $results[$index] = current($promise->rejected->result);
                         }
                     } else {
                         $resolve($promise);
