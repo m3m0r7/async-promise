@@ -1,7 +1,12 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
+
 namespace AsyncPromise;
 
 use AsyncPromise\Driver\DriverInterface;
+use AsyncPromise\Driver\PolyfillDriver;
+use AsyncPromise\Driver\SwooleDriver;
 use AsyncPromise\Exception\HandlePropagator;
 use AsyncPromise\Result\PromiseResultFulfilled;
 use AsyncPromise\Result\PromiseResultRejected;
@@ -16,7 +21,7 @@ class Promise
     protected ?Promise $nextPromise = null;
     protected Resolver $fulfilled;
     protected Resolver $rejected;
-    protected static string $driverName;
+    protected static ?string $driverName = null;
     protected string $status = self::PENDING;
 
     /**
@@ -30,8 +35,24 @@ class Promise
         static::$driverName = $driver;
     }
 
+    public static function setPromiseDriverAutomatically(): void
+    {
+        // Set driver automatically when not calling setPromiseDriver function
+        if (static::$driverName !== null) {
+            return;
+        }
+
+        if (extension_loaded('swoole') || extension_loaded('openswoole')) {
+            static::setPromiseDriver(SwooleDriver::class);
+            return;
+        }
+        static::setPromiseDriver(PolyfillDriver::class);
+    }
+
     public function __construct(callable $function)
     {
+        static::setPromiseDriverAutomatically();
+
         $this->fulfilled = new Resolver($this);
         $this->rejected = new Resolver($this);
 

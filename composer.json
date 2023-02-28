@@ -26,5 +26,10 @@
         "psr-4": {
             "AsyncPromise\\Tests\\": "tests/"
         }
+    },
+    "scripts": {
+        "lint:cs": "phpcf --standard=PSR12 src/ tests/",
+        "lint:fix": "phpcbf --standard=PSR12 src/ tests/",
+        "analyze": "phpstan analyze --level=9 src/ tests/"
     }
 }

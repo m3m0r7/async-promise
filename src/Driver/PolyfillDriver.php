@@ -1,10 +1,11 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace AsyncPromise\Driver;
 
 class PolyfillDriver implements DriverInterface
 {
-
     public function async(callable $callback): void
     {
         $callback();
@@ -17,5 +18,4 @@ class PolyfillDriver implements DriverInterface
     public function notify(): void
     {
     }
-
 }
