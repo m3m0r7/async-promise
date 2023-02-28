@@ -65,14 +65,14 @@ class Promise
 
     public static function resolve(mixed $value): self
     {
-        return new static(function ($resolve) use ($value) {
+        return new static(function (callable $resolve) use ($value) {
             $resolve($value);
         });
     }
 
     public static function reject(mixed $value): self
     {
-        return new static(function ($_, $reject) use ($value) {
+        return new static(function (callable $_, callable $reject) use ($value) {
             $reject($value);
         });
     }
@@ -96,7 +96,7 @@ class Promise
                 }
             } catch (\Throwable $e) {
                 $this->nextPromise = clone $this;
-                $this->nextPromise->rejected->result = $e->getMessage();
+                $this->nextPromise->rejected->result = [$e->getMessage()];
             }
 
             $this->driver->notify();
@@ -117,11 +117,11 @@ class Promise
                     if ($promise instanceof Promise) {
                         if ($promise->status === static::FULFILLED) {
                             $remaining--;
-                            $results[$index] = $promise->fulfilled->result;
+                            $results[$index] = current($promise->fulfilled->result);
                         }
                         if ($promise->status === static::REJECTED) {
                             // stop to loop
-                            $reject($promise->rejected->result);
+                            $reject(...$promise->rejected->result);
                             return;
                         }
                     } else {
@@ -130,9 +130,6 @@ class Promise
                     }
                 }
             } while ($remaining > 0);
-
-            // Sort result
-            sort($results);
             $resolve(array_values($results));
         });
     }
@@ -153,12 +150,16 @@ class Promise
                             $results[$index] = new PromiseResultFulfilled(
                                 $promise->status,
                                 $promise->fulfilled->result
+                                    ? current($promise->fulfilled->result)
+                                    : null
                             );
                         } elseif ($promise->status === static::REJECTED) {
                             $remaining--;
                             $results[$index] = new PromiseResultRejected(
                                 $promise->status,
                                 $promise->rejected->result
+                                    ? current($promise->rejected->result)
+                                    : null,
                             );
                         }
                     } else {
@@ -171,8 +172,6 @@ class Promise
                 }
             } while ($remaining > 0);
 
-            // Sort result
-            sort($results);
             $resolve(array_values($results));
         });
     }
@@ -187,12 +186,12 @@ class Promise
                 foreach ($promises as $index => $promise) {
                     if ($promise instanceof Promise) {
                         if ($promise->status === static::FULFILLED) {
-                            $resolve($promise->fulfilled->result);
+                            $resolve(...$promise->fulfilled->result);
                             return;
                         }
                         if ($promise->status === static::REJECTED) {
                             // stop to loop
-                            $reject($promise->rejected->result);
+                            $reject(...$promise->rejected->result);
                             return;
                         }
                     } else {
@@ -217,7 +216,7 @@ class Promise
                     if ($promise instanceof Promise) {
                         if ($promise->status === static::FULFILLED) {
                             // stop to loop
-                            $resolve($promise->fulfilled->result);
+                            $resolve(...$promise->fulfilled->result);
                             return;
                         }
 
@@ -232,8 +231,6 @@ class Promise
                 }
             } while ($remaining > 0);
 
-            // Sort result
-            sort($results);
             $reject(array_values($results));
         });
     }
@@ -246,7 +243,10 @@ class Promise
 
     private function createNoop(): self
     {
-        return clone $this;
+        $newPromise = clone $this;
+        $newPromise->fulfilled->result ??= [null];
+        $newPromise->rejected->result ??= [null];
+        return $newPromise;
     }
 
     public function then(callable $callback, callable $onRejected = null): self
