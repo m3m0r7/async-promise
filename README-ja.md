@@ -88,7 +88,49 @@ use AsyncPromise\Promise;
 
 ```
 
-### Promise::all
-### Promise::allSettled
-### Promise::race
-### Promise::any
+
+
+#### Promise::all(array)
+#### Promise::allSettled(array)
+#### Promise::race(array)
+#### Promise::any(array)
+#### Promise::resolve(mixed)
+#### Promise::reject(string)
+
+
+### ドライバー
+
+非同期処理のドライバーを選択することができます。現状では以下のドライバーが実装されています。
+
+- \AsyncPromise\Driver\SwooleDriver
+- \AsyncPromise\Driver\PolyfillDriver
+
+
+ドライバーの切り替えは以下のように行います。
+
+```php
+
+Promise::setPromiseDriver(\AsyncPromise\Driver\SwooleDriver::class);
+
+(new Promise(...))->then(...);
+
+```
+
+`SwooleDriver` を使用する場合，以下のように `\Co\run(...)` 関数のコンテキスト内で `Promise` を実行する必要があります。
+
+
+```php
+
+Promise::setPromiseDriver(\AsyncPromise\Driver\SwooleDriver::class);
+
+\Co\run(function () {
+    (new Promise(fn (callable $resolve) => $resolve('resolved with SwooleDriver')))
+        // `resolved with SwooleDriver` と表示されます。
+        ->then(fn ($result) => print($result));
+});
+
+```
+
+
+`PolyfillDriver` は，非同期処理ライブラリが導入されていない場合に，導入されているように仮定して実行させるためのドライバーです。
+実態は非同期ではなく同期的に動作するためパフォーマンスが向上することはありません。
