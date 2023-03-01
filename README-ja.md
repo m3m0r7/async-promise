@@ -235,3 +235,11 @@ Promise::setPromiseDriver(\AsyncPromise\Driver\SwooleDriver::class);
 
 `PolyfillDriver` は，非同期処理ライブラリが導入されていない場合に，導入されているように仮定して実行させるためのドライバーです。
 実態は非同期ではなく同期的に動作するためパフォーマンスが向上することはありません。
+
+## テストの実行
+
+以下のコマンドでテストを実行できます。
+
+```
+./vendor/bin/phpunit tests/
+```

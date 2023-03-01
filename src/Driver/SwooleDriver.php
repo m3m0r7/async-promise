@@ -50,5 +50,4 @@ class SwooleDriver extends AbstractDriver
         // Inject Swoole coroutine bugs.
         usleep(1);
     }
-
 }

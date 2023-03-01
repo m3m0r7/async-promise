@@ -18,17 +18,13 @@ abstract class AbstractDriver implements DriverInterface
 
     public static function postAll(): void
     {
-
     }
 
     public static function postAllSettled(): void
     {
-
     }
 
     public static function postRace(): void
     {
-
     }
-
 }
