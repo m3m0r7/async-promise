@@ -146,7 +146,7 @@ class Promise
                         $results[$index] = $promise;
                     }
                 }
-                
+
                 if (static::$driverName !== null) {
                     (static::$driverName)::postAll();
                 }
@@ -287,14 +287,6 @@ class Promise
         $this->rejected = new Resolver($this);
     }
 
-    private function createNoop(): self
-    {
-        $newPromise = clone $this;
-        $newPromise->fulfilled = new Resolver($this);
-        $newPromise->rejected = new Resolver($this);
-        return $newPromise;
-    }
-
     public function then(callable $callback, callable $onRejected = null): self
     {
         $this->driver->wait();
@@ -308,11 +300,25 @@ class Promise
 
         if ($this->status === static::FULFILLED) {
             return $newThis
-                ->start($callback, true, ...($this->fulfilled->result ?? []));
+                ->start(
+                    $callback,
+                    true,
+                    ...(is_array($this->fulfilled->result)
+                        ? $this->fulfilled->result
+                        : [$this->fulfilled->result]
+                    )
+                );
         }
 
         return $newThis
-            ->start($onRejected, true, ...($this->rejected->result ?? []));
+            ->start(
+                $onRejected,
+                true,
+                ...(is_array($this->rejected->result)
+                    ? $this->rejected->result
+                    : [$this->rejected->result]
+                )
+        );
     }
 
     public function catch(callable $callback): self
@@ -323,7 +329,14 @@ class Promise
         $newThis->status = static::FULFILLED;
 
         return $newThis
-            ->start($callback, true, ...($this->rejected->result ?? []));
+            ->start(
+                $callback,
+                true,
+                ...(is_array($this->rejected->result)
+                ? $this->rejected->result
+                : [$this->rejected->result]
+            )
+        );
     }
 
     public function finally(callable $callback): self
