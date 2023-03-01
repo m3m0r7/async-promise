@@ -310,14 +310,19 @@ class Promise
                 );
         }
 
+        $rejectedReason = is_array($this->rejected->result)
+            ? $this->rejected->result
+            : [$this->rejected->result];
+
+        if ($rejectedReason === [null]) {
+            return $newThis;
+        }
+
         return $newThis
             ->start(
                 $onRejected,
                 true,
-                ...(is_array($this->rejected->result)
-                    ? $this->rejected->result
-                    : [$this->rejected->result]
-                )
+                ...$rejectedReason
         );
     }
 
@@ -327,6 +332,14 @@ class Promise
 
         $newThis = clone $this;
         $newThis->status = static::FULFILLED;
+
+        $rejectedReason = is_array($this->rejected->result)
+            ? $this->rejected->result
+            : [$this->rejected->result];
+
+        if ($rejectedReason === [null]) {
+            return $newThis;
+        }
 
         return $newThis
             ->start(
