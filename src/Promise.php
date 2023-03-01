@@ -20,11 +20,11 @@ class Promise
     public const PENDING = 'pending';
     public const REJECTED = 'rejected';
 
-    protected ?Promise $nextPromise = null;
     protected Resolver $fulfilled;
     protected Resolver $rejected;
     protected static ?string $driverName = null;
     protected string $status = self::PENDING;
+    protected bool $stopChaining = false;
 
     /**
      * @var callable $function
@@ -60,8 +60,13 @@ class Promise
 
         $this->start(
             $function,
-            ($this->fulfilled)(fn() => $this->status = static::FULFILLED),
-            ($this->rejected)(fn() => $this->status = static::REJECTED),
+            false,
+            ($this->fulfilled)(function ($value) {
+                $this->status = static::FULFILLED;
+            }),
+            ($this->rejected)(function ($value) {
+                $this->status = static::REJECTED;
+            }),
         );
     }
 
@@ -79,30 +84,40 @@ class Promise
         });
     }
 
-    protected function start(callable $function, mixed ...$parameters): void
+    protected function start(callable $function, bool $useReturnValue, mixed ...$parameters): self
     {
+        if ($this->stopChaining) {
+            return $this;
+        }
+
         $this->driver = new (static::$driverName)();
         $this->function = $function;
 
-        $this->driver->async(function () use ($parameters) {
+        $this->driver->async(function () use ($parameters, $useReturnValue) {
             $result = null;
             try {
                 $result = ($this->function)(...$parameters);
                 if ($result instanceof Promise) {
-                    $this->nextPromise = $result;
-                } elseif ($result === null) {
-                    $this->nextPromise = $this->createNoop();
-                } else {
-                    $this->nextPromise = clone $this;
-                    $this->nextPromise->fulfilled->result = [$result];
+                    $this->fulfilled->result = [$result->fulfilled->result];
+                    $this->rejected->result = [$result->rejected->result];
+                } elseif ($useReturnValue) {
+                    if ($this->status === self::FULFILLED) {
+                        $this->fulfilled->result = [$result];
+                    } elseif ($this->status === self::REJECTED) {
+                        $this->rejected->result = [$result];
+                    } else {
+                        $this->stopChaining = true;
+                    }
                 }
             } catch (\Throwable $e) {
-                $this->nextPromise = clone $this;
-                $this->nextPromise->rejected->result = [$e->getMessage()];
+                $this->status = static::REJECTED;
+                $this->rejected->result = [$e->getMessage()];
             }
 
             $this->driver->notify();
         });
+
+        return $this;
     }
 
     /**
@@ -228,7 +243,6 @@ class Promise
                 foreach ($promises as $index => $promise) {
                     if ($promise instanceof Promise) {
                         if ($promise->status === static::FULFILLED) {
-                            // stop to loop
                             if (is_array($promise->fulfilled->result)) {
                                 $resolve(...$promise->fulfilled->result);
                             } else {
@@ -256,62 +270,56 @@ class Promise
 
     protected function __clone()
     {
-        $this->fulfilled = clone $this->fulfilled;
-        $this->rejected = clone $this->rejected;
+        $this->status = self::PENDING;
+        $this->fulfilled = new Resolver($this);
+        $this->rejected = new Resolver($this);
     }
 
     private function createNoop(): self
     {
         $newPromise = clone $this;
-        $newPromise->fulfilled->result ??= [null];
-        $newPromise->rejected->result ??= [null];
+        $newPromise->fulfilled = new Resolver($this);
+        $newPromise->rejected = new Resolver($this);
         return $newPromise;
     }
 
     public function then(callable $callback, callable $onRejected = null): self
     {
+        $this->driver->wait();
+
         if ($onRejected === null) {
             $onRejected = fn (string $reason) => throw new HandlePropagator($reason);
         }
 
-        $this->catch($onRejected);
+        $newThis = clone $this;
+        $newThis->status = static::FULFILLED;
 
-        return $this->process(
-            $callback,
-            fn (Promise $promise) => $promise->fulfilled->result,
-        );
+        if ($this->status === static::FULFILLED) {
+            return $newThis
+                ->start($callback, true, ...($this->fulfilled->result ?? []));
+        }
+
+        return $newThis
+            ->start($onRejected, true, ...($this->rejected->result ?? []));
     }
 
     public function catch(callable $callback): self
     {
-        return $this->process(
-            $callback,
-            fn (Promise $promise) => $promise->rejected->result,
-        );
+        $this->driver->wait();
+
+        $newThis = clone $this;
+        $newThis->status = static::FULFILLED;
+
+        return $newThis
+            ->start($callback, true, ...($this->rejected->result ?? []));
     }
 
     public function finally(callable $callback): self
     {
-        return $this->process($callback, fn () => []);
-    }
-
-    protected function process(callable $callback, callable $extractArguments): self
-    {
         $this->driver->wait();
 
-        if (!($this->nextPromise instanceof Promise)) {
-            throw new PromiseException('The promise is not started');
-        }
-
-        $newPromise = clone $this->nextPromise;
-        $result = $extractArguments($newPromise);
-
-        if ($result !== null) {
-            $newPromise->start($callback, ...$result);
-        }
-
-        $newPromise->nextPromise ??= $this->createNoop();
-        return $newPromise;
+        return (clone $this)
+            ->start($callback, true);
     }
 
     public function status(): string

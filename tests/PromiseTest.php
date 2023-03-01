@@ -304,6 +304,33 @@ class PromiseTest extends TestCase
     /**
      * @dataProvider provideDrivers
      */
+    public function testPromiseAllRejecting(string $driverName)
+    {
+        Promise::setPromiseDriver($driverName);
+
+        $results = [];
+        $instantiatedStdClass = null;
+        \Co\run(function () use (&$results, &$instantiatedStdClass) {
+            Promise::all([
+                43,
+                ['array'],
+                $instantiatedStdClass = new \stdClass(),
+                new Promise(fn (callable $_, callable $reject) => $reject('rejected')),
+                1.1,
+                'string'
+            ])->then(function ($values) use (&$results) {
+                $results = $values;
+            })->catch(function ($reason) use (&$results) {
+                $results[] = $reason;
+            });
+        });
+
+        $this->assertSame(['rejected'], $results);
+    }
+
+    /**
+     * @dataProvider provideDrivers
+     */
     public function testPromiseAllSettled(string $driverName)
     {
         Promise::setPromiseDriver($driverName);
@@ -386,6 +413,71 @@ class PromiseTest extends TestCase
             'rejected2',
             'rejected3',
         ], $results);
+    }
+
+    /**
+     * @dataProvider provideDrivers
+     */
+    public function testPromiseThrowAnException(string $driverName)
+    {
+        Promise::setPromiseDriver($driverName);
+
+        $results = [];
+        \Co\run(function () use (&$results) {
+            (new Promise(function () {
+                throw new \Exception('Throw an exception');
+            }))->catch(function ($reason) use (&$results) {
+                $results[] = $reason;
+            });
+        });
+
+        $this->assertSame(['Throw an exception'], $results);
+    }
+
+    /**
+     * @dataProvider provideDrivers
+     */
+    public function testPromiseThrowAnExceptionPassthroughThen(string $driverName)
+    {
+        Promise::setPromiseDriver($driverName);
+
+        $results = [];
+        \Co\run(function () use (&$results) {
+            (new Promise(function () {
+                throw new \Exception('Throw an exception');
+            }))->then(function () {
+                // Unreachable here
+                $this->assertFalse(true);
+            })->catch(function ($reason) use (&$results) {
+                $results[] = $reason;
+            });
+        });
+
+        $this->assertSame(['Throw an exception'], $results);
+    }
+
+    /**
+     * @dataProvider provideDrivers
+     */
+    public function testPromiseThrowAnExceptionThenCatcher(string $driverName)
+    {
+        Promise::setPromiseDriver($driverName);
+
+        $results = [];
+        \Co\run(function () use (&$results) {
+            (new Promise(function () {
+                throw new \Exception('Throw an exception');
+            }))->then(function () {
+                $this->assertFalse(true);
+            }, function ($reason) use (&$results) {
+                $results[] = $reason . ' in the then';
+            })->catch(function ($reason) use (&$results) {
+                // Unreachable here
+                $results[] = $reason;
+            });
+        });
+
+        $this->assertSame(['Throw an exception in the then'], $results);
     }
 
     public static function provideDrivers(): array

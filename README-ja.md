@@ -91,6 +91,61 @@ use AsyncPromise\Promise;
 
 
 #### Promise::all(array)
+
+渡された `Promise` で拒否されるまで全てを履行し，その結果を新しい Promise として返します。
+
+```php
+<?php
+
+use AsyncPromise\Promise;
+
+Promise::all([
+    65535,
+    'text',
+    (new Promise(fn (callable $resolve) => $resolve('fulfilled1'))),
+    ['key' => 'value'],
+    (new Promise(fn (callable $resolve) => $resolve('fulfilled2'))),
+])->then(function (array $values) {
+    // 以下のような結果が出力されます。
+    //
+    // Array
+    // (
+    //    [0] => 65535
+    //    [1] => text
+    //    [2] => fulfilled1
+    //    [3] => Array
+    //        (
+    //            [key] => value
+    //        )
+    //
+    //    [4] => fulfilled2
+    // )
+    print_r($values);
+});
+
+```
+
+拒否が実行される場合は以下のようになります。
+
+```php
+<?php
+
+use AsyncPromise\Promise;
+
+Promise::all([
+    65535,
+    'text',
+    (new Promise(fn (callable $_, callable $reject) => $reject('rejected'))),
+])->then(function (array $values) {
+    // このステートメントには到達しません。
+    print_r($values);
+})->catch(function (string $reason) {
+    // rejected と出力されます。
+    echo $reason;
+});
+
+```
+
 #### Promise::allSettled(array)
 #### Promise::race(array)
 #### Promise::any(array)

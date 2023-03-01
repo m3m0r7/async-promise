@@ -21,7 +21,7 @@ class Resolver
     {
         return new PromiseResolver(function (...$parameters) use ($callback) {
             $this->result = $parameters;
-            $callback();
+            $callback($this->result);
         });
     }
 }
