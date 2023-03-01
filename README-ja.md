@@ -164,6 +164,40 @@ Promise::all([
 ```
 
 #### Promise::allSettled(array)
+
+渡された `Promise` が全て履行または拒否されるまで実行し，その結果を新しい Promise として返します。
+
+
+```php
+<?php
+
+use AsyncPromise\Promise;
+
+Promise::allSettled([
+    65535,
+    'text',
+    (new Promise(fn (callable $resolve) => $resolve('resolved'))),
+    (new Promise(fn (callable $_, callable $reject) => $reject('rejected'))),
+])->then(function (array $values) {
+    foreach ($values as $value) {
+        if ($value->status === Promise::FULFILLED) {
+            // 以下が表示されます:
+            //   fulfilled: 65535
+            //   fulfilled: text
+            //   fulfilled: resolved
+            echo "{$value->status}: {$value->value}\n";
+        }
+        if ($value->status === Promise::REJECTED) {
+            // 以下が表示されます:
+            //   rejected: rejected
+            echo "{$value->status}: {$value->reason}\n";
+        }
+    }
+});
+
+```
+
+
 #### Promise::race(array)
 #### Promise::any(array)
 #### Promise::resolve(mixed)
@@ -234,7 +268,7 @@ Promise::setPromiseDriver(\AsyncPromise\Driver\SwooleDriver::class);
 ```
 
 `PolyfillDriver` は，非同期処理ライブラリが導入されていない場合に，導入されているように仮定して実行させるためのドライバーです。
-実態は非同期ではなく同期的に動作するためパフォーマンスが向上することはありません。
+実態は非同期ではなく同期的に動作するためパフォーマンスが向上することはありません。上記のコードを `PolyfillDriver` で実行した場合 `Take 8 sec` と表示されます。
 
 ## テストの実行
 
