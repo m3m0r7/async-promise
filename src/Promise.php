@@ -20,11 +20,15 @@ class Promise
     public const PENDING = 'pending';
     public const REJECTED = 'rejected';
 
+    protected const THEN = 2;
+    protected const CATCH = 4;
+    protected const FINALLY = 8;
+
     protected Resolver $fulfilled;
     protected Resolver $rejected;
     protected static ?string $driverName = null;
     protected string $status = self::PENDING;
-    protected bool $stopChaining = false;
+    protected int $nextExpectChaining = 0;
 
     /**
      * @var callable $function
@@ -86,10 +90,6 @@ class Promise
 
     protected function start(callable $function, bool $useReturnValue, mixed ...$parameters): self
     {
-        if ($this->stopChaining) {
-            return $this;
-        }
-
         $this->driver = new (static::$driverName)();
         $this->function = $function;
 
@@ -105,8 +105,6 @@ class Promise
                         $this->fulfilled->result = [$result];
                     } elseif ($this->status === self::REJECTED) {
                         $this->rejected->result = [$result];
-                    } else {
-                        $this->stopChaining = true;
                     }
                 }
             } catch (\Throwable $e) {
@@ -319,7 +317,7 @@ class Promise
         $this->driver->wait();
 
         $newThis = clone $this;
-        $newThis->stopChaining = false;
+        $newThis->status = static::FULFILLED;
 
         return $newThis
             ->start($callback, true);

@@ -549,6 +549,31 @@ class PromiseTest extends TestCase
         $this->assertSame(['finally1', 'finally2', 'finally3'], $results);
     }
 
+    /**
+     * @dataProvider provideDrivers
+     */
+    public function testPromiseFinallyChainingThen(string $driverName)
+    {
+        Promise::setPromiseDriver($driverName);
+
+        $results = [];
+        \Co\run(function () use (&$results) {
+            (new Promise(function () {
+                throw new \Exception('Throw an exception');
+            }))->finally(function () use (&$results) {
+                $results[] = 'finally1';
+            })->finally(function () use (&$results) {
+                $results[] = 'finally2';
+            })->finally(function () use (&$results) {
+                $results[] = 'finally3';
+            })->then(function () use (&$results) {
+                $results[] = 'then1';
+            });
+        });
+
+        $this->assertSame(['finally1', 'finally2', 'finally3', 'then1'], $results);
+    }
+
     public static function provideDrivers(): array
     {
         return [
