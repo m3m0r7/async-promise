@@ -318,7 +318,10 @@ class Promise
     {
         $this->driver->wait();
 
-        return (clone $this)
+        $newThis = clone $this;
+        $newThis->stopChaining = false;
+
+        return $newThis
             ->start($callback, true);
     }
 

@@ -480,6 +480,75 @@ class PromiseTest extends TestCase
         $this->assertSame(['Throw an exception in the then'], $results);
     }
 
+    /**
+     * @dataProvider provideDrivers
+     */
+    public function testPromiseFinallyOnAnResolve(string $driverName)
+    {
+        Promise::setPromiseDriver($driverName);
+
+        $results = [];
+        \Co\run(function () use (&$results) {
+            (new Promise(function (callable $resolve) {
+                $resolve('resolve!');
+            }))->finally(function () use (&$results) {
+                $results[] = 'finally1';
+            })->finally(function () use (&$results) {
+                $results[] = 'finally2';
+            })->finally(function () use (&$results) {
+                $results[] = 'finally3';
+            });
+        });
+
+        $this->assertSame(['finally1', 'finally2', 'finally3'], $results);
+    }
+
+    /**
+     * @dataProvider provideDrivers
+     */
+    public function testPromiseFinallyOnAnReject(string $driverName)
+    {
+        Promise::setPromiseDriver($driverName);
+
+        $results = [];
+        \Co\run(function () use (&$results) {
+            (new Promise(function (callable $_, callable $reject) {
+                $reject('rejected!');
+            }))->finally(function () use (&$results) {
+                $results[] = 'finally1';
+            })->finally(function () use (&$results) {
+                $results[] = 'finally2';
+            })->finally(function () use (&$results) {
+                $results[] = 'finally3';
+            });
+        });
+
+        $this->assertSame(['finally1', 'finally2', 'finally3'], $results);
+    }
+
+    /**
+     * @dataProvider provideDrivers
+     */
+    public function testPromiseFinallyOnAnException(string $driverName)
+    {
+        Promise::setPromiseDriver($driverName);
+
+        $results = [];
+        \Co\run(function () use (&$results) {
+            (new Promise(function () {
+                throw new \Exception('Throw an exception');
+            }))->finally(function () use (&$results) {
+                $results[] = 'finally1';
+            })->finally(function () use (&$results) {
+                $results[] = 'finally2';
+            })->finally(function () use (&$results) {
+                $results[] = 'finally3';
+            });
+        });
+
+        $this->assertSame(['finally1', 'finally2', 'finally3'], $results);
+    }
+
     public static function provideDrivers(): array
     {
         return [
