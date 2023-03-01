@@ -1,30 +1,30 @@
-English | [日本語](./README-ja.md)
+[English](./README.md) | 日本語
 ---
 
 # AsyncPromise
 
-## AsyncPromise とは
+## What is the AsyncPromise?
 
-AsyncPromise は，PHP で JavaScript の Promise を参考に実装された非同期処理を簡易的に行うためのライブラリです。
+The AsyncPromise is a library for processing concurrently on PHP which implementing similarity with Javascript's Promise.
 
-## 必要要件
+## Requirements
 
-- PHP 8.1 以上
-- Swoole (SwooleDriver を使用する場合)
+- PHP 8.1 or higher
+- Swoole (if you use SwooleDriver)
 
-## インストール方法
+## How to install
 
-以下のコマンドを実行することでインストールができます。
+You can install as following command:
 
 ```sh
 $ composer require m3m0r7/async-promise
 ```
 
-## 使い方
+## How to use
 
-### クイックスタート
+### Get started
 
-一般的には JavaScript と同様に以下のように使用することができます。
+The Promise can be used in the same way JavaScript as following:
 
 ```php
 <?php
@@ -34,13 +34,13 @@ use AsyncPromise\Promise;
 (new Promise(function (callable $resolve) {
     $resolve('resolved!');
 }))->then(function ($result) {
-    // `resolved!` と表示します。
+    // Show `resolved!`
     echo $result;
 });
 
 ```
 
-例外は `catch` をチェインすることで処理が可能です。
+You can receive an exception to chain with `catch` method.
 
 ```php
 <?php
@@ -50,13 +50,13 @@ use AsyncPromise\Promise;
 (new Promise(function (callable $resolve) {
     throw new Exception('An error occurred');
 }))->catch(function ($reason) {
-    // `An error occurred` と表示します。
+    // Show `An error occurred`
     echo $reason;
 });
 
 ```
 
-もしくは以下のように `Promise` のコールバック関数に渡される第二引数で拒否することでも可能です。
+Or you can process a rejection by the second parameter on a Promise callback function.
 
 
 ```php
@@ -67,13 +67,13 @@ use AsyncPromise\Promise;
 (new Promise(function (callable $_, callable $reject) {
     $reject('An error occurred');
 }))->catch(function ($reason) {
-    // `An error occurred` と表示します。
+    // Show `An error occurred`
     echo $reason;
 });
 
 ```
 
-`then` を複数回チェインすることも可能です。
+And the `then` method can be multiple chained.
 
 ```php
 <?php
@@ -85,13 +85,13 @@ use AsyncPromise\Promise;
 }))->then(function ($result) {
     return 'nested chain: ' . $result;
 })->then(function ($result) {
-    // `nested chain: resolved!` と表示します。
+    // Show `nested chain: resolved!`
     echo $result;
 });
 
 ```
 
-`then` または `catch` 実行の後に，特定の処理を実行したい場合は `finally` を使用することができます。
+After calling `then` or `catch` method, you can use `finally` if you want to run something.
 
 ```php
 <?php
@@ -111,8 +111,7 @@ use AsyncPromise\Promise;
 ```
 
 #### Promise::all(array)
-
-渡された `Promise` で拒否されるまで全てを履行し，その結果を新しい Promise として返します。
+The result is returned as a new Promise when all of the passed `Promises` are fulfilled until rejecting.
 
 ```php
 <?php
@@ -126,7 +125,7 @@ Promise::all([
     ['key' => 'value'],
     (new Promise(fn (callable $resolve) => $resolve('fulfilled2'))),
 ])->then(function (array $values) {
-    // 以下のような結果が出力されます。
+    // Show as following:
     //
     // Array
     // (
@@ -145,7 +144,7 @@ Promise::all([
 
 ```
 
-拒否が実行される場合は以下のようになります。
+It will run until reject as following:
 
 ```php
 <?php
@@ -157,10 +156,10 @@ Promise::all([
     'text',
     (new Promise(fn (callable $_, callable $reject) => $reject('rejected'))),
 ])->then(function (array $values) {
-    // このステートメントには到達しません。
+    // This statement is unreachable.
     print_r($values);
 })->catch(function (string $reason) {
-    // rejected と出力されます。
+    // Show `rejected`
     echo $reason;
 });
 
@@ -168,7 +167,7 @@ Promise::all([
 
 #### Promise::allSettled(array)
 
-渡された `Promise` が全て履行または拒否されるまで実行し，その結果を新しい Promise として返します。
+The result is returned as a new Promise when all of the passed `Promises` are processed.
 
 
 ```php
@@ -184,14 +183,14 @@ Promise::allSettled([
 ])->then(function (array $values) {
     foreach ($values as $value) {
         if ($value->status === Promise::FULFILLED) {
-            // 以下が表示されます:
+            // Show as following:
             //   fulfilled: 65535
             //   fulfilled: text
             //   fulfilled: resolved
             echo "{$value->status}: {$value->value}\n";
         }
         if ($value->status === Promise::REJECTED) {
-            // 以下が表示されます:
+            // Show as following:
             //   rejected: rejected
             echo "{$value->status}: {$value->reason}\n";
         }
@@ -204,7 +203,7 @@ Promise::allSettled([
 #### Promise::race(array)
 
 
-渡された `Promise` のいずれかが実行完了し，その結果を新しい Promise として返します。
+The result is returned as a new Promise when one of the passed `Promises` is processed.
 
 
 ```php
@@ -218,7 +217,7 @@ Promise::race([
     (new Promise(fn (callable $resolve) => $resolve('resolved2'))),
     (new Promise(fn (callable $_, callable $reject) => $reject('rejected2'))),
 ])->then(function ($value) {
-    // `resolved1` が表示されます
+    // Show `resolved1`
     echo "{$value}\n";
 });
 
@@ -226,7 +225,7 @@ Promise::race([
 
 #### Promise::any(array)
 
-渡された `Promise` のいずれかが履行された時，その結果を新しい Promise として返します。
+The result is returned as a new Promise when one of the passed `Promises` is fulfilled.
 
 
 ```php
@@ -240,13 +239,13 @@ Promise::any([
     (new Promise(fn (callable $resolve) => $resolve('resolved2'))),
     (new Promise(fn (callable $_, callable $reject) => $reject('rejected2'))),
 ])->then(function ($value) {
-    // `resolved1` が表示されます
+    // Show `resolved1`
     echo "{$value}\n";
 });
 
 ```
 
-なお，履行されなかった場合 `catch` にチェインされます。
+And it is not fulfilled, it will chain to `catch` method.
 
 ```php
 <?php
@@ -259,7 +258,7 @@ Promise::any([
     (new Promise(fn (callable $_, callable $reject) => $reject('rejected3'))),
     (new Promise(fn (callable $_, callable $reject) => $reject('rejected4'))),
 ])->catch(function (array $values) {
-    // 以下のように表示されます:
+    // Show as following:
     //
     // Array
     // (
@@ -275,7 +274,7 @@ Promise::any([
 
 #### Promise::resolve(mixed)
 
-`Promise` を履行します。
+It will resolve `Promise`.
 
 ```php
 <?php
@@ -284,12 +283,12 @@ use AsyncPromise\Promise;
 
 Promise::resolve('resolved1')
     ->then(function (string $value) {
-        // `resolved1` を表示します。
+        // Show `resolved1`
         echo "resolved1\n";
     });
 ```
 
-`Promise` を拒否します。
+It will reject `Promise`.
 
 ```php
 <?php
@@ -298,7 +297,7 @@ use AsyncPromise\Promise;
 
 Promise::reject('resolved1')
     ->catch(function (string $value) {
-        // `resolved1` を表示します。
+        // Show `resolved1`
         echo "resolved1\n";
     });
 ```
@@ -306,15 +305,15 @@ Promise::reject('resolved1')
 #### Promise::reject(string)
 
 
-### ドライバー
+### Drivers
 
-非同期処理のドライバーを選択することができます。現状では以下のドライバーが実装されています。
+You can choose to run concurrently driver. The AsyncPromise was implemented as following:
 
 - \AsyncPromise\Driver\SwooleDriver
 - \AsyncPromise\Driver\PolyfillDriver
 
 
-ドライバーの切り替えは以下のように行います。
+To switch other driver:
 
 ```php
 
@@ -324,7 +323,7 @@ Promise::setPromiseDriver(\AsyncPromise\Driver\SwooleDriver::class);
 
 ```
 
-`SwooleDriver` を使用する場合，以下のように `\Co\run(...)` 関数のコンテキスト内で `Promise` を実行する必要があります。
+You must run a Promise in `\Co\run(...)` context if you use the `SwooleDriver`.
 
 
 ```php
@@ -333,21 +332,20 @@ Promise::setPromiseDriver(\AsyncPromise\Driver\SwooleDriver::class);
 
 \Co\run(function () {
     (new Promise(fn (callable $resolve) => $resolve('resolved with SwooleDriver')))
-        // `resolved with SwooleDriver` と表示されます。
+        // Show `resolved with SwooleDriver`
         ->then(fn ($result) => print($result));
 });
 
 ```
 
 
-SwooleDriver の恩恵を受けるのは，非同期に処理する場合です。以下のようなコードは SwooleDriver の本領を発揮します。
-
+You will get a benefit with concurrency when using `SwooleDriver`. The below command is getting SwooleDriver performance:
 
 ```php
 
 Promise::setPromiseDriver(\AsyncPromise\Driver\SwooleDriver::class);
 
-// sleep 関数をコルーチンに対応させます
+// sleep function to be coroutinized.
 \Swoole\Runtime::enableCoroutine(SWOOLE_HOOK_SLEEP);
 
 \Co\run(function () {
@@ -362,19 +360,19 @@ Promise::setPromiseDriver(\AsyncPromise\Driver\SwooleDriver::class);
             $resolve();
         }),
     ])->then(function ($values) use ($start) {
-        // Take 5 sec と表示されます。
+        // Show `Take 5 sec`
         echo "Take " . (time() - $start) . " sec";
     });
 });
 
 ```
 
-`PolyfillDriver` は，非同期処理ライブラリが導入されていない場合に，導入されているように仮定して実行させるためのドライバーです。
-実態は非同期ではなく同期的に動作するためパフォーマンスが向上することはありません。上記のコードを `PolyfillDriver` で実行した場合 `Take 8 sec` と表示されます。
+The `PolyfillDriver` is a virtual process driver when concurrency driver is not installed.
+Therefore the `PolyfillDriver` does not increase performance because which is running on synchronization. For example, to run above code; it will show `Take 8 sec`.
 
-## テストの実行
+## How to test
 
-以下のコマンドでテストを実行できます。
+You can run tests as following commands:
 
 ```
 ./vendor/bin/phpunit tests/
