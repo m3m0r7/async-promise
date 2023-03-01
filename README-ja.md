@@ -88,7 +88,24 @@ use AsyncPromise\Promise;
 
 ```
 
+`then` または `catch` 実行の後に，特定の処理を実行したい場合は `finally` を使用することができます。
 
+```php
+<?php
+
+use AsyncPromise\Promise;
+
+(new Promise(function (callable $resolve) {
+    $resolve('resolved!');
+}))->then(function ($result) {
+    return 'nested chain: ' . $result;
+}, function ($reason) {
+    echo $reason;
+})->finally(function ($result) {
+    echo "Finally was reached";
+});
+
+```
 
 #### Promise::all(array)
 
