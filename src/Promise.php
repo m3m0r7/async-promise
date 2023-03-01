@@ -295,11 +295,11 @@ class Promise
             $onRejected = fn (string $reason) => throw new HandlePropagator($reason);
         }
 
-        $newThis = clone $this;
-        $newThis->status = static::FULFILLED;
+        $newPromise = clone $this;
+        $newPromise->status = static::FULFILLED;
 
         if ($this->status === static::FULFILLED) {
-            return $newThis
+            return $newPromise
                 ->start(
                     $callback,
                     true,
@@ -310,56 +310,47 @@ class Promise
                 );
         }
 
-        $rejectedReason = is_array($this->rejected->result)
-            ? $this->rejected->result
-            : [$this->rejected->result];
-
-        if ($rejectedReason === [null]) {
-            return $newThis;
-        }
-
-        return $newThis
-            ->start(
-                $onRejected,
-                true,
-                ...$rejectedReason
-        );
+        return $this->_catch($newPromise, $onRejected);
     }
 
     public function catch(callable $callback): self
     {
         $this->driver->wait();
 
-        $newThis = clone $this;
-        $newThis->status = static::FULFILLED;
+        $newPromise = clone $this;
+        $newPromise->status = static::FULFILLED;
+        return $this->_catch($newPromise, $callback);
+    }
 
+    protected function _catch(Promise $newPromise, callable $callback): self
+    {
         $rejectedReason = is_array($this->rejected->result)
             ? $this->rejected->result
             : [$this->rejected->result];
 
         if ($rejectedReason === [null]) {
-            return $newThis;
+            return $newPromise;
         }
 
-        return $newThis
+        return $newPromise
             ->start(
                 $callback,
                 true,
                 ...(is_array($this->rejected->result)
                 ? $this->rejected->result
                 : [$this->rejected->result]
-            )
-        );
+                )
+            );
     }
 
     public function finally(callable $callback): self
     {
         $this->driver->wait();
 
-        $newThis = clone $this;
-        $newThis->status = static::FULFILLED;
+        $newPromise = clone $this;
+        $newPromise->status = static::FULFILLED;
 
-        return $newThis
+        return $newPromise
             ->start($callback, true);
     }
 
