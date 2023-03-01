@@ -28,7 +28,6 @@ class Promise
     protected Resolver $rejected;
     protected static ?string $driverName = null;
     protected string $status = self::PENDING;
-    protected int $nextExpectChaining = 0;
 
     /**
      * @var callable $function
@@ -111,7 +110,6 @@ class Promise
                 $this->status = static::REJECTED;
                 $this->rejected->result = [$e->getMessage()];
             }
-
             $this->driver->notify();
         });
 
@@ -148,6 +146,8 @@ class Promise
                         $results[$index] = $promise;
                     }
                 }
+
+                (static::$driverName)::postAll();
             } while ($remaining > 0);
             $resolve(array_values($results));
         });
@@ -189,6 +189,8 @@ class Promise
                         );
                     }
                 }
+
+                (static::$driverName)::postAllSettled();
             } while ($remaining > 0);
 
             $resolve(array_values($results));
@@ -225,6 +227,8 @@ class Promise
                         return;
                     }
                 }
+
+                (static::$driverName)::postRace();
             } while (true);
         });
     }
@@ -260,6 +264,8 @@ class Promise
                         return;
                     }
                 }
+
+                (static::$driverName)::postAny();
             } while ($remaining > 0);
 
             $reject(array_values($results));

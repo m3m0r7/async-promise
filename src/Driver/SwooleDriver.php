@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace AsyncPromise\Driver;
 
-class SwooleDriver implements DriverInterface
+class SwooleDriver extends AbstractDriver
 {
     protected \Co\Channel $notify;
 
@@ -26,4 +26,29 @@ class SwooleDriver implements DriverInterface
     {
         $this->notify->push(1);
     }
+
+    public static function postAny(): void
+    {
+        // Inject Swoole coroutine bugs.
+        usleep(1);
+    }
+
+    public static function postAll(): void
+    {
+        // Inject Swoole coroutine bugs.
+        usleep(1);
+    }
+
+    public static function postAllSettled(): void
+    {
+        // Inject Swoole coroutine bugs.
+        usleep(1);
+    }
+
+    public static function postRace(): void
+    {
+        // Inject Swoole coroutine bugs.
+        usleep(1);
+    }
+
 }

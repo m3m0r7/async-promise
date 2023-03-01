@@ -204,5 +204,35 @@ Promise::setPromiseDriver(\AsyncPromise\Driver\SwooleDriver::class);
 ```
 
 
+SwooleDriver の恩恵を受けるのは，非同期に処理する場合です。以下のようなコードは SwooleDriver の本領を発揮します。
+
+
+```php
+
+Promise::setPromiseDriver(\AsyncPromise\Driver\SwooleDriver::class);
+
+// sleep 関数をコルーチンに対応させます
+\Swoole\Runtime::enableCoroutine(SWOOLE_HOOK_SLEEP);
+
+
+\Co\run(function () {
+    $start = time();
+    Promise::all([
+        new Promise(function (callable $resolve) {
+            sleep(3);
+            $resolve();
+        }),
+        new Promise(function (callable $resolve) {
+            sleep(5);
+            $resolve();
+        }),
+    ])->then(function ($values) use ($start) {
+        // Take 5 sec と表示されます。
+        echo "Take " . (time() - $start) . " sec";
+    });
+});
+
+```
+
 `PolyfillDriver` は，非同期処理ライブラリが導入されていない場合に，導入されているように仮定して実行させるためのドライバーです。
 実態は非同期ではなく同期的に動作するためパフォーマンスが向上することはありません。

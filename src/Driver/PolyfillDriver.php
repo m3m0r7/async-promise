@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace AsyncPromise\Driver;
 
-class PolyfillDriver implements DriverInterface
+class PolyfillDriver extends AbstractDriver
 {
     public function async(callable $callback): void
     {
