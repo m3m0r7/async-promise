@@ -199,8 +199,107 @@ Promise::allSettled([
 
 
 #### Promise::race(array)
+
+
+渡された `Promise` のいずれかが実行完了し，その結果を新しい Promise として返します。
+
+
+```php
+<?php
+
+use AsyncPromise\Promise;
+
+Promise::race([
+    (new Promise(fn (callable $resolve) => $resolve('resolved1'))),
+    (new Promise(fn (callable $_, callable $reject) => $reject('rejected1'))),
+    (new Promise(fn (callable $resolve) => $resolve('resolved2'))),
+    (new Promise(fn (callable $_, callable $reject) => $reject('rejected2'))),
+])->then(function ($value) {
+    // `resolved1` が表示されます
+    echo "{$value}\n";
+});
+
+```
+
 #### Promise::any(array)
+
+渡された `Promise` のいずれかが履行された時，その結果を新しい Promise として返します。
+
+
+```php
+<?php
+
+use AsyncPromise\Promise;
+
+Promise::any([
+    (new Promise(fn (callable $resolve) => $resolve('resolved1'))),
+    (new Promise(fn (callable $_, callable $reject) => $reject('rejected1'))),
+    (new Promise(fn (callable $resolve) => $resolve('resolved2'))),
+    (new Promise(fn (callable $_, callable $reject) => $reject('rejected2'))),
+])->then(function ($value) {
+    // `resolved1` が表示されます
+    echo "{$value}\n";
+});
+
+```
+
+なお，履行されなかった場合 `catch` にチェインされます。
+
+```php
+<?php
+
+use AsyncPromise\Promise;
+
+Promise::any([
+    (new Promise(fn (callable $_, callable $reject) => $reject('rejected1'))),
+    (new Promise(fn (callable $_, callable $reject) => $reject('rejected2'))),
+    (new Promise(fn (callable $_, callable $reject) => $reject('rejected3'))),
+    (new Promise(fn (callable $_, callable $reject) => $reject('rejected4'))),
+])->catch(function (array $values) {
+    // 以下のように表示されます:
+    //
+    // Array
+    // (
+    //     [0] => rejected1
+    //     [1] => rejected2
+    //     [2] => rejected3
+    //     [3] => rejected4
+    // )
+    print_r($values);
+});
+
+```
+
 #### Promise::resolve(mixed)
+
+`Promise` を履行します。
+
+```php
+<?php
+
+use AsyncPromise\Promise;
+
+Promise::resolve('resolved1')
+    ->then(function (string $value) {
+        // `resolved1` を表示します。
+        echo "resolved1\n";
+    });
+```
+
+`Promise` を拒否します。
+
+```php
+<?php
+
+use AsyncPromise\Promise;
+
+Promise::reject('resolved1')
+    ->catch(function (string $value) {
+        // `resolved1` を表示します。
+        echo "resolved1\n";
+    });
+```
+
 #### Promise::reject(string)
 
 
