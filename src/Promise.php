@@ -146,8 +146,10 @@ class Promise
                         $results[$index] = $promise;
                     }
                 }
-
-                (static::$driverName)::postAll();
+                
+                if (static::$driverName !== null) {
+                    (static::$driverName)::postAll();
+                }
             } while ($remaining > 0);
             $resolve(array_values($results));
         });
@@ -190,7 +192,9 @@ class Promise
                     }
                 }
 
-                (static::$driverName)::postAllSettled();
+                if (static::$driverName !== null) {
+                    (static::$driverName)::postAllSettled();
+                }
             } while ($remaining > 0);
 
             $resolve(array_values($results));
@@ -228,7 +232,9 @@ class Promise
                     }
                 }
 
-                (static::$driverName)::postRace();
+                if (static::$driverName !== null) {
+                    (static::$driverName)::postRace();
+                }
             } while (true);
         });
     }
@@ -265,7 +271,9 @@ class Promise
                     }
                 }
 
-                (static::$driverName)::postAny();
+                if (static::$driverName !== null) {
+                    (static::$driverName)::postAny();
+                }
             } while ($remaining > 0);
 
             $reject(array_values($results));
