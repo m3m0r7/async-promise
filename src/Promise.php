@@ -322,7 +322,7 @@ class Promise
         return $this->_catch($newPromise, $callback);
     }
 
-    protected function _catch(Promise $newPromise, callable $callback): self
+    private function _catch(Promise $newPromise, callable $callback): self
     {
         $rejectedReason = is_array($this->rejected->result)
             ? $this->rejected->result
@@ -337,10 +337,10 @@ class Promise
                 $callback,
                 true,
                 ...(is_array($this->rejected->result)
-                ? $this->rejected->result
-                : [$this->rejected->result]
-                )
-            );
+                    ? $this->rejected->result
+                    : [$this->rejected->result]
+            )
+        );
     }
 
     public function finally(callable $callback): self
