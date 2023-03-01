@@ -214,7 +214,6 @@ Promise::setPromiseDriver(\AsyncPromise\Driver\SwooleDriver::class);
 // sleep 関数をコルーチンに対応させます
 \Swoole\Runtime::enableCoroutine(SWOOLE_HOOK_SLEEP);
 
-
 \Co\run(function () {
     $start = time();
     Promise::all([
