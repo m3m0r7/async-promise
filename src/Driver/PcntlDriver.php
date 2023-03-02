@@ -30,7 +30,7 @@ class PcntlDriver extends AbstractDriver
         if ($this->pid === 0) {
             $status = $callback();
 
-            // Stop chain forcibly and status code to a parent process.
+            // Stop chain forcibly and return status code to a parent process.
             exit(
                 $status === Promise::FULFILLED
                     ? 127
