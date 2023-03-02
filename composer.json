@@ -30,7 +30,7 @@
         }
     },
     "scripts": {
-        "lint:cs": "phpcf --standard=PSR12 src/ tests/",
+        "lint:cs": "phpcs --standard=PSR12 src/ tests/",
         "lint:fix": "phpcbf --standard=PSR12 src/ tests/",
         "lint:static-analyze": "phpstan analyze --level=9 src/"
     }

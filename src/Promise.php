@@ -349,8 +349,8 @@ class Promise
                 ...(is_array($this->rejected->result)
                     ? $this->rejected->result
                     : [$this->rejected->result]
-            )
-        );
+                )
+            );
     }
 
     public function finally(callable $callback): self
