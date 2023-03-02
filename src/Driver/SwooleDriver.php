@@ -19,6 +19,9 @@ class SwooleDriver extends AbstractDriver
 
     public function async(callable $callback): void
     {
+        if (\Co::getCid() === 0) {
+            throw new PromiseException('You must call the async method within a Promise::createContext');
+        }
         go(function () use ($callback) {
             $this->notify = new \Co\Channel(1);
             $callback();

@@ -9,6 +9,9 @@ use AsyncPromise\Promise;
 
 class PcntlDriver extends AbstractDriver
 {
+    protected const FULFILLED_RETURN_CODE = 127;
+    protected const REJECTED_RETURN_CODE = 128;
+
     protected int|null $pid = null;
     protected Promise $promise;
 
@@ -33,8 +36,8 @@ class PcntlDriver extends AbstractDriver
             // Stop chain forcibly and return status code to a parent process.
             exit(
                 $status === Promise::FULFILLED
-                    ? 127
-                    : 128
+                    ? static::FULFILLED_RETURN_CODE
+                    : static::REJECTED_RETURN_CODE
             );
         }
     }
@@ -49,8 +52,8 @@ class PcntlDriver extends AbstractDriver
         $exitCode = pcntl_wexitstatus($status);
 
         match ($exitCode) {
-            127 => $this->promise->setStatus(Promise::FULFILLED),
-            128 => $this->promise->setStatus(Promise::REJECTED),
+            static::FULFILLED_RETURN_CODE => $this->promise->setStatus(Promise::FULFILLED),
+            static::REJECTED_RETURN_CODE => $this->promise->setStatus(Promise::REJECTED),
             default => throw new PromiseException("The PcntlDriver received invalid exit code: {$exitCode}"),
         };
     }
