@@ -311,6 +311,7 @@ Promise::reject('resolved1')
 You can choose to run concurrently driver. The AsyncPromise was implemented as following:
 
 - \AsyncPromise\Driver\SwooleDriver
+- \AsyncPromise\Driver\FiberDriver
 - \AsyncPromise\Driver\PolyfillDriver
 
 

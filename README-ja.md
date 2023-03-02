@@ -312,6 +312,7 @@ Promise::reject('resolved1')
 非同期処理のドライバーを選択することができます。現状では以下のドライバーが実装されています。
 
 - \AsyncPromise\Driver\SwooleDriver
+- \AsyncPromise\Driver\FiberDriver
 - \AsyncPromise\Driver\PolyfillDriver
 
 
