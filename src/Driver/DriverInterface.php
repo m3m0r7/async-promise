@@ -14,4 +14,5 @@ interface DriverInterface
     public static function postAll(): void;
     public static function postAllSettled(): void;
     public static function postRace(): void;
+    public static function createContext(callable $callback): void;
 }

@@ -327,14 +327,14 @@ Promise::setPromiseDriver(\AsyncPromise\Driver\SwooleDriver::class);
 
 ```
 
-`SwooleDriver` を使用する場合，以下のように `\Co\run(...)` 関数のコンテキスト内で `Promise` を実行する必要があります。
+`SwooleDriver` を使用する場合，以下のように `Promise::createContext(...)` 関数のコンテキスト内で `Promise` を実行する必要があります。
 
 
 ```php
 
 Promise::setPromiseDriver(\AsyncPromise\Driver\SwooleDriver::class);
 
-\Co\run(function () {
+Promise::createContext(function () {
     (new Promise(fn (callable $resolve) => $resolve('resolved with SwooleDriver')))
         // `resolved with SwooleDriver` と表示されます。
         ->then(fn ($result) => print($result));
@@ -353,7 +353,7 @@ Promise::setPromiseDriver(\AsyncPromise\Driver\SwooleDriver::class);
 // sleep 関数をコルーチンに対応させます
 \Swoole\Runtime::enableCoroutine(SWOOLE_HOOK_SLEEP);
 
-\Co\run(function () {
+Promise::createContext(function () {
     $start = time();
     Promise::all([
         new Promise(function (callable $resolve) {

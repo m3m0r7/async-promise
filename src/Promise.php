@@ -89,7 +89,7 @@ class Promise
 
     protected function start(callable $function, bool $useReturnValue, mixed ...$parameters): self
     {
-        $this->driver = new (static::$driverName)();
+        $this->driver = new (static::$driverName)($this);
         $this->function = $function;
 
         $this->driver->async(function () use ($parameters, $useReturnValue) {
@@ -111,6 +111,8 @@ class Promise
                 $this->rejected->result = [$e->getMessage()];
             }
             $this->driver->notify();
+
+            return $this->status;
         });
 
         return $this;
@@ -369,5 +371,19 @@ class Promise
     public function status(): string
     {
         return $this->status;
+    }
+
+    public function setStatus(string $status): self
+    {
+        $this->status = $status;
+        return $this;
+    }
+
+    public static function createContext(callable $callback): void
+    {
+        if (static::$driverName === null) {
+            throw new PromiseException('The Promise cannot create a context because driver is not specified');
+        }
+        (static::$driverName)::createContext($callback);
     }
 }

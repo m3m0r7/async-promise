@@ -27,4 +27,9 @@ abstract class AbstractDriver implements DriverInterface
     public static function postRace(): void
     {
     }
+
+    public static function createContext(callable $callback): void
+    {
+        $callback();
+    }
 }

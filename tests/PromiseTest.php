@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace AsyncPromise\Tests;
 
+use AsyncPromise\Driver\FiberDriver;
+use AsyncPromise\Driver\PcntlDriver;
 use AsyncPromise\Driver\PolyfillDriver;
 use AsyncPromise\Driver\SwooleDriver;
 use AsyncPromise\Promise;
@@ -18,7 +20,7 @@ class PromiseTest extends TestCase
     {
         Promise::setPromiseDriver($driverName);
 
-        \Co\run(function () {
+        Promise::createContext(function () {
             $promise = new Promise(fn(callable $resolve) => $resolve(true));
             $this->assertInstanceOf(Promise::class, $promise);
             $this->assertSame(Promise::FULFILLED, $promise->status());
@@ -32,7 +34,7 @@ class PromiseTest extends TestCase
     {
         Promise::setPromiseDriver($driverName);
 
-        \Co\run(function () {
+        Promise::createContext(function () {
             $promise = new Promise(fn(callable $_, callable $reject) => $reject(true));
             $this->assertInstanceOf(Promise::class, $promise);
             $this->assertSame(Promise::REJECTED, $promise->status());
@@ -47,7 +49,7 @@ class PromiseTest extends TestCase
     {
         Promise::setPromiseDriver($driverName);
 
-        \Co\run(function () {
+        Promise::createContext(function () {
             (new Promise(fn(callable $resolve) => $resolve('test')))
                 ->then(function ($result) {
                     $this->assertSame('test', $result);
@@ -62,7 +64,7 @@ class PromiseTest extends TestCase
     {
         Promise::setPromiseDriver($driverName);
 
-        \Co\run(function () {
+        Promise::createContext(function () {
             (new Promise(fn(callable $resolve) => $resolve('test')))
                 ->then(function ($result) {
                     $this->assertSame('test', $result);
@@ -80,7 +82,7 @@ class PromiseTest extends TestCase
     {
         Promise::setPromiseDriver($driverName);
 
-        \Co\run(function () {
+        Promise::createContext(function () {
             (new Promise(fn(callable $_, callable $reject) => $reject('test')))
                 ->then(function ($result) {
                     $this->assertFalse(true);
@@ -98,7 +100,7 @@ class PromiseTest extends TestCase
         Promise::setPromiseDriver($driverName);
 
         $results = [];
-        \Co\run(function () use (&$results) {
+        Promise::createContext(function () use (&$results) {
             (new Promise(fn(callable $resolve) => $resolve('test')))
                 ->then(function ($result) use (&$results) {
                     $results[] = 'then1';
@@ -123,7 +125,7 @@ class PromiseTest extends TestCase
         Promise::setPromiseDriver($driverName);
 
         $results = [];
-        \Co\run(function () use (&$results) {
+        Promise::createContext(function () use (&$results) {
             (new Promise(fn(callable $_, callable $reject) => $reject('test')))
                 ->catch(function ($result) use (&$results) {
                     $results[] = 'then1';
@@ -147,7 +149,7 @@ class PromiseTest extends TestCase
         Promise::setPromiseDriver($driverName);
 
         $results = [];
-        \Co\run(function () use (&$results) {
+        Promise::createContext(function () use (&$results) {
             (new Promise(fn(callable $resolve) => $resolve('test')))
                 ->then(function ($result) use (&$results) {
                     $results[] = 'then1';
@@ -171,7 +173,7 @@ class PromiseTest extends TestCase
         Promise::setPromiseDriver($driverName);
 
         $results = [];
-        \Co\run(function () use (&$results) {
+        Promise::createContext(function () use (&$results) {
             (new Promise(fn(callable $_, callable $reject) => $reject('then1')))
                 ->catch(function ($reason) use (&$results) {
                     $results[] = $reason;
@@ -193,7 +195,7 @@ class PromiseTest extends TestCase
     {
         Promise::setPromiseDriver($driverName);
 
-        \Co\run(function () {
+        Promise::createContext(function () {
             (new Promise(fn(callable $_, callable $reject) => $reject('test')))
                 ->catch(function ($reason) {
                     $this->assertSame('test', $reason);
@@ -209,7 +211,7 @@ class PromiseTest extends TestCase
         Promise::setPromiseDriver($driverName);
 
         $results = [];
-        \Co\run(function () use (&$results) {
+        Promise::createContext(function () use (&$results) {
             (new Promise(fn(callable $_, callable $reject) => $reject('then1')))
                 ->catch(function ($reason) use (&$results) {
                     $results[] = $reason;
@@ -231,7 +233,7 @@ class PromiseTest extends TestCase
         Promise::setPromiseDriver($driverName);
 
         $results = [];
-        \Co\run(function () use (&$results) {
+        Promise::createContext(function () use (&$results) {
             $promise = Promise::resolve('then1');
 
             $this->assertInstanceOf(Promise::class, $promise);
@@ -254,7 +256,7 @@ class PromiseTest extends TestCase
         Promise::setPromiseDriver($driverName);
 
         $results = [];
-        \Co\run(function () use (&$results) {
+        Promise::createContext(function () use (&$results) {
             $promise = Promise::reject('then1');
 
             $this->assertInstanceOf(Promise::class, $promise);
@@ -278,7 +280,7 @@ class PromiseTest extends TestCase
 
         $results = [];
         $instantiatedStdClass = null;
-        \Co\run(function () use (&$results, &$instantiatedStdClass) {
+        Promise::createContext(function () use (&$results, &$instantiatedStdClass) {
             Promise::all([
                 43,
                 ['array'],
@@ -310,7 +312,7 @@ class PromiseTest extends TestCase
 
         $results = [];
         $instantiatedStdClass = null;
-        \Co\run(function () use (&$results, &$instantiatedStdClass) {
+        Promise::createContext(function () use (&$results, &$instantiatedStdClass) {
             Promise::all([
                 43,
                 ['array'],
@@ -337,7 +339,7 @@ class PromiseTest extends TestCase
 
         $results = [];
         $instantiatedStdClass = null;
-        \Co\run(function () use (&$results, &$instantiatedStdClass) {
+        Promise::createContext(function () use (&$results, &$instantiatedStdClass) {
             Promise::allSettled([
                 43,
                 ['array'],
@@ -373,7 +375,7 @@ class PromiseTest extends TestCase
 
         $results = [];
         $instantiatedStdClass = null;
-        \Co\run(function () use (&$results, &$instantiatedStdClass) {
+        Promise::createContext(function () use (&$results, &$instantiatedStdClass) {
             Promise::race([
                 43,
                 ['array'],
@@ -398,7 +400,7 @@ class PromiseTest extends TestCase
         Promise::setPromiseDriver($driverName);
 
         $results = [];
-        \Co\run(function () use (&$results, &$instantiatedStdClass) {
+        Promise::createContext(function () use (&$results, &$instantiatedStdClass) {
             Promise::any([
                 new Promise(fn (callable $_, callable $reject) => $reject('rejected1')),
                 new Promise(fn (callable $_, callable $reject) => $reject('rejected2')),
@@ -423,7 +425,7 @@ class PromiseTest extends TestCase
         Promise::setPromiseDriver($driverName);
 
         $results = [];
-        \Co\run(function () use (&$results) {
+        Promise::createContext(function () use (&$results) {
             (new Promise(function () {
                 throw new \Exception('Throw an exception');
             }))->catch(function ($reason) use (&$results) {
@@ -442,7 +444,7 @@ class PromiseTest extends TestCase
         Promise::setPromiseDriver($driverName);
 
         $results = [];
-        \Co\run(function () use (&$results) {
+        Promise::createContext(function () use (&$results) {
             (new Promise(function () {
                 throw new \Exception('Throw an exception');
             }))->then(function () {
@@ -464,7 +466,7 @@ class PromiseTest extends TestCase
         Promise::setPromiseDriver($driverName);
 
         $results = [];
-        \Co\run(function () use (&$results) {
+        Promise::createContext(function () use (&$results) {
             (new Promise(function () {
                 throw new \Exception('Throw an exception');
             }))->then(function () {
@@ -488,7 +490,7 @@ class PromiseTest extends TestCase
         Promise::setPromiseDriver($driverName);
 
         $results = [];
-        \Co\run(function () use (&$results) {
+        Promise::createContext(function () use (&$results) {
             (new Promise(function (callable $resolve) {
                 $resolve('resolve!');
             }))->finally(function () use (&$results) {
@@ -511,7 +513,7 @@ class PromiseTest extends TestCase
         Promise::setPromiseDriver($driverName);
 
         $results = [];
-        \Co\run(function () use (&$results) {
+        Promise::createContext(function () use (&$results) {
             (new Promise(function (callable $_, callable $reject) {
                 $reject('rejected!');
             }))->finally(function () use (&$results) {
@@ -534,7 +536,7 @@ class PromiseTest extends TestCase
         Promise::setPromiseDriver($driverName);
 
         $results = [];
-        \Co\run(function () use (&$results) {
+        Promise::createContext(function () use (&$results) {
             (new Promise(function () {
                 throw new \Exception('Throw an exception');
             }))->finally(function () use (&$results) {
@@ -557,7 +559,7 @@ class PromiseTest extends TestCase
         Promise::setPromiseDriver($driverName);
 
         $results = [];
-        \Co\run(function () use (&$results) {
+        Promise::createContext(function () use (&$results) {
             (new Promise(function () {
                 throw new \Exception('Throw an exception');
             }))->finally(function () use (&$results) {
@@ -579,6 +581,8 @@ class PromiseTest extends TestCase
         return [
             [SwooleDriver::class],
             [PolyfillDriver::class],
+            [FiberDriver::class],
+            [PcntlDriver::class],
         ];
     }
 }
