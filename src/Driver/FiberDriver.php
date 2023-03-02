@@ -4,10 +4,19 @@ declare(strict_types=1);
 
 namespace AsyncPromise\Driver;
 
+use AsyncPromise\Exception\PromiseException;
+
 class FiberDriver extends AbstractDriver
 {
     protected ?\Fiber $fiber = null;
     protected bool $notified = false;
+
+    public function __construct()
+    {
+        if (!class_exists('Fiber', false)) {
+            throw new PromiseException('The Fiber is not installed');
+        }
+    }
 
     public function async(callable $callback): void
     {

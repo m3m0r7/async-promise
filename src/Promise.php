@@ -291,6 +291,10 @@ class Promise
     {
         $this->driver->wait();
 
+        if ($this->status === static::PENDING) {
+            throw new PromiseException('The Promise status is pending. The driver did not wait changing status.');
+        }
+
         if ($onRejected === null) {
             $onRejected = fn (string $reason) => throw new HandlePropagator($reason);
         }
@@ -316,6 +320,10 @@ class Promise
     public function catch(callable $callback): self
     {
         $this->driver->wait();
+
+        if ($this->status === static::PENDING) {
+            throw new PromiseException('The Promise status is pending. The driver did not wait changing status.');
+        }
 
         $newPromise = clone $this;
         $newPromise->status = static::FULFILLED;
@@ -346,6 +354,10 @@ class Promise
     public function finally(callable $callback): self
     {
         $this->driver->wait();
+
+        if ($this->status === static::PENDING) {
+            throw new PromiseException('The Promise status is pending. The driver did not wait changing status.');
+        }
 
         $newPromise = clone $this;
         $newPromise->status = static::FULFILLED;

@@ -4,9 +4,18 @@ declare(strict_types=1);
 
 namespace AsyncPromise\Driver;
 
+use AsyncPromise\Exception\PromiseException;
+
 class SwooleDriver extends AbstractDriver
 {
     protected \Co\Channel $notify;
+
+    public function __construct()
+    {
+        if (!extension_loaded('swoole') && !extension_loaded('openswoole')) {
+            throw new PromiseException('The swoole or openswoole are not installed');
+        }
+    }
 
     public function async(callable $callback): void
     {

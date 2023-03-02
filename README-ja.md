@@ -313,6 +313,7 @@ Promise::reject('resolved1')
 
 - \AsyncPromise\Driver\SwooleDriver
 - \AsyncPromise\Driver\FiberDriver
+- \AsyncPromise\Driver\PcntlDriver (experimental)
 - \AsyncPromise\Driver\PolyfillDriver
 
 

@@ -312,6 +312,7 @@ You can choose to run concurrently driver. The AsyncPromise was implemented as f
 
 - \AsyncPromise\Driver\SwooleDriver
 - \AsyncPromise\Driver\FiberDriver
+- \AsyncPromise\Driver\PcntlDriver (experimental)
 - \AsyncPromise\Driver\PolyfillDriver
 
 
