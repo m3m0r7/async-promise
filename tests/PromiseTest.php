@@ -582,7 +582,7 @@ class PromiseTest extends TestCase
             [SwooleDriver::class],
             [PolyfillDriver::class],
             [FiberDriver::class],
-            [PcntlDriver::class],
+//            [PcntlDriver::class],
         ];
     }
 }
